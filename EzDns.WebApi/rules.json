@@ -1,0 +1,28 @@
+[
+  {
+    "pattern": "abc.pj-local.cn",
+    "type": 1,
+    "mode": "fixed",
+    "value": "127.0.0.1",
+    "isEnabled": true,
+    "priority": 100
+  },
+  {
+    "pattern": "*.a-domain.cn",
+    "type": 1,
+    "mode": "auto",
+    "value": "",
+    "isEnabled": true,
+    "priority": 90,
+    "ipBase": "192.168.0."
+  },
+  {
+    "pattern": "*.b-domain.cn",
+    "type": 1,
+    "mode": "auto",
+    "value": "",
+    "isEnabled": true,
+    "priority": 80,
+    "ipBase": "172.16.0."
+  }
+]

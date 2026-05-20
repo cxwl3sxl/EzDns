@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="EzDns.Core/EzDns.Core.csproj" />
+  <Project Path="EzDns.WebApi/EzDns.WebApi.csproj" />
+</Solution>
