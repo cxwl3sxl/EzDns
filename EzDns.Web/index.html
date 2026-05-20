@@ -4,7 +4,124 @@
   <meta charset="UTF-8" />
   <link rel="icon" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EzDns 管理界面</title>
+  <title>EzDns — DNS Rule Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-root: #0b0e14;
+      --bg-surface: #12161f;
+      --bg-elevated: #1a1f2e;
+      --bg-hover: #222838;
+      --bg-input: #0e1219;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-active: rgba(0, 209, 193, 0.4);
+
+      --accent: #00d1c1;
+      --accent-dim: rgba(0, 209, 193, 0.12);
+      --accent-glow: rgba(0, 209, 193, 0.25);
+      --accent-secondary: #f08c5a;
+      --accent-secondary-dim: rgba(240, 140, 90, 0.12);
+
+      --text-primary: #e8ecf4;
+      --text-secondary: #8b92a5;
+      --text-muted: #4f5569;
+
+      --success: #3dd68c;
+      --success-dim: rgba(61, 214, 140, 0.1);
+      --warning: #f0c419;
+      --warning-dim: rgba(240, 196, 25, 0.1);
+      --danger: #f25757;
+      --danger-dim: rgba(242, 87, 87, 0.1);
+      --info: #5eabf0;
+      --info-dim: rgba(94, 171, 240, 0.1);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      --shadow-glow: 0 0 40px rgba(0, 209, 193, 0.06);
+      --font-display: 'Lexend', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html {
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-root);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 209, 193, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 209, 193, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Gradient orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 209, 193, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-muted);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Selection */
+    ::selection {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
