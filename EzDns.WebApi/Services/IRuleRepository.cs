@@ -32,7 +32,11 @@ public class JsonRuleRepository : IRuleRepository
                 return new List<DnsRule>();
 
             var json = await File.ReadAllTextAsync(_filePath);
-            return JsonSerializer.Deserialize<List<DnsRule>>(json) ?? new List<DnsRule>();
+            var options = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true 
+            };
+            return JsonSerializer.Deserialize<List<DnsRule>>(json, options) ?? new List<DnsRule>();
         }
         finally
         {
@@ -45,7 +49,8 @@ public class JsonRuleRepository : IRuleRepository
         await _semaphore.WaitAsync();
         try
         {
-            var json = JsonSerializer.Serialize(rules, new JsonSerializerOptions { WriteIndented = true });
+            var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            var json = JsonSerializer.Serialize(rules, options);
             await File.WriteAllTextAsync(_filePath, json);
         }
         finally

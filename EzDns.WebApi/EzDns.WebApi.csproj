@@ -16,4 +16,8 @@
     <ProjectReference Include="..\EzDns.Core\EzDns.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

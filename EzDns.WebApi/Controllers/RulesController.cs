@@ -36,8 +36,8 @@ public class RulesController : ControllerBase
         return Ok();
     }
 
-    [HttpDelete("{pattern}")]
-    public async Task<ActionResult> DeleteRule(string pattern)
+    [HttpDelete]
+    public async Task<ActionResult> DeleteRule([FromQuery] string pattern)
     {
         await _repository.DeleteRule(pattern);
         return Ok();
