@@ -25,7 +25,7 @@ public class EzDnsHostedService : BackgroundService
         var forwardResolver = new UdpRequestResolver(new IPEndPoint(IPAddress.Parse(_options.ForwardDns), 53));
         var resolver = new CustomRuleResolver(rules, forwardResolver);
         _server = new DnsServer(resolver);
-        await _server.Listen();
+        await _server.Listen(_options.DnsPort);
     }
 
     public override void Dispose()
