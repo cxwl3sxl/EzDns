@@ -3,3 +3,6 @@ obj
 node_modules
 dist
 wwwroot
+_ReSharper.Caches
+.vs
+*.user
