@@ -24,18 +24,21 @@ public class CustomRuleResolver : IRequestResolver
 
     public async Task<IResponse> Resolve(IRequest request, CancellationToken cancellationToken = default)
     {
-        var rules = await _repository.GetAllRules();
-        var sortedRules = rules.OrderByDescending(r => r.Priority).ToList();
+        var allRules = await _repository.GetAllRules();
+        var sortedRules = RuleSort.BuildEvaluationOrder(allRules);
 
         var response = Response.FromRequest(request);
 
         foreach (var question in request.Questions)
         {
-            var matchedRule = MatchRule(sortedRules, question.Name.ToString(), question.Type);
-            if (matchedRule != null)
+            var domainName = question.Name.ToString();
+            var lowerDomain = domainName.ToLowerInvariant();
+
+            var match = MatchRule(sortedRules, lowerDomain, question.Type);
+            if (match.MatchedRule is not null)
             {
-                var record = CreateRecord(question, matchedRule, question.Name.ToString().ToLowerInvariant());
-                if (record != null)
+                var record = CreateRecord(question, match.MatchedRule, match.MatchedSubDomain!, lowerDomain);
+                if (record is not null)
                 {
                     response.AnswerRecords.Add(record);
                     response.ResponseCode = ResponseCode.NoError;
@@ -47,10 +50,17 @@ public class CustomRuleResolver : IRequestResolver
         return await _forwardResolver.Resolve(request, cancellationToken);
     }
 
-    private DnsRule? MatchRule(List<DnsRule> sortedRules, string domain, RecordType type)
-    {
-        string lowerDomain = domain.ToLowerInvariant();
+    /// <summary>Result of a rule match used by both the resolver and CreateRecord.</summary>
+    /// <param name="MatchedRule">The DNS rule that matched the query (null if none matched).</param>
+    /// <param name="MatchedSubDomain">
+    ///   The leading (leftmost) subdomain fragments that triggered the match,
+    ///   e.g. "a.84" for rule *.84.pj.cn matching a.84.pj.cn.
+    ///   Null for fixed rules or when no match occurred.
+    /// </param>
+    private sealed record RuleMatch(DnsRule MatchedRule, string? MatchedSubDomain);
 
+    private RuleMatch MatchRule(List<DnsRule> sortedRules, string lowerDomain, RecordType type)
+    {
         foreach (var rule in sortedRules.Where(r => r.IsEnabled))
         {
             if (rule.Type != type && rule.Type != RecordType.ANY)
@@ -61,7 +71,7 @@ public class CustomRuleResolver : IRequestResolver
                 case "fixed":
                     if (lowerDomain.Equals(rule.Pattern.ToLowerInvariant()) ||
                         lowerDomain.EndsWith("." + rule.Pattern.ToLowerInvariant()))
-                        return rule;
+                        return new RuleMatch(rule, null);
                     break;
 
                 case "auto":
@@ -69,16 +79,20 @@ public class CustomRuleResolver : IRequestResolver
                     {
                         string suffix = rule.Pattern[1..];
                         if (lowerDomain.EndsWith(suffix) || lowerDomain.Equals(suffix[1..]))
-                            return rule;
+                        {
+                            // matchedSubDomain = leading segments before the suffix (e.g. "a.84")
+                            string stripped = lowerDomain.Substring(0, lowerDomain.Length - suffix.Length);
+                            return new RuleMatch(rule, stripped);
+                        }
                     }
                     break;
             }
         }
 
-        return null;
+        return new RuleMatch(null, null);
     }
 
-    private IResourceRecord? CreateRecord(Question question, DnsRule rule, string domain)
+    private IResourceRecord? CreateRecord(Question question, DnsRule rule, string matchedSubDomain, string lowerDomain)
     {
         switch (rule.Mode)
         {
@@ -92,26 +106,19 @@ public class CustomRuleResolver : IRequestResolver
             case "auto":
                 if (rule.Pattern.StartsWith("*"))
                 {
-                    string suffix = rule.Pattern[1..];
-                    if (domain.EndsWith(suffix) || domain.Equals(suffix[1..]))
+                    // Extract the last dot-separated segment from matchedSubDomain
+                    // e.g. "a.84" → last segment = "84"
+                    // e.g. "a"    → last segment = "a"
+                    string cleanSub = matchedSubDomain;
+                    if (cleanSub.EndsWith("."))
+                        cleanSub = cleanSub[..^1];
+
+                    var parts = cleanSub.Split('.');
+                    if (parts.Length >= 1 && int.TryParse(parts[^1], out int lastOctet))
                     {
-                        int idx = domain.LastIndexOf(suffix, StringComparison.Ordinal);
-                        if (idx < 0)
-                            return null;
-                        string subPrefix = domain.Substring(0, idx);
-                        // Remove trailing dot if present
-                        if (subPrefix.EndsWith("."))
-                        {
-                            subPrefix = subPrefix.Substring(0, subPrefix.Length - 1);
-                        }
-                        var parts = subPrefix.Split('.');
-                        // Get the last part which should be the numeric value
-                        if (parts.Length >= 1 && int.TryParse(parts[parts.Length - 1], out int lastOctet))
-                        {
-                            string ipBase = string.IsNullOrEmpty(rule.IpBase) ? "192.168.0." : rule.IpBase;
-                            var generatedIp = IPAddress.Parse($"{ipBase}{lastOctet}");
-                            return new IPAddressResourceRecord(question.Name, generatedIp, TimeSpan.FromMinutes(5));
-                        }
+                        string ipBase = string.IsNullOrEmpty(rule.IpBase) ? "192.168.0." : rule.IpBase;
+                        var generatedIp = IPAddress.Parse($"{ipBase}{lastOctet}");
+                        return new IPAddressResourceRecord(question.Name, generatedIp, TimeSpan.FromMinutes(5));
                     }
                 }
                 break;

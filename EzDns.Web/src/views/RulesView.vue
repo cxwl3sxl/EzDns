@@ -55,6 +55,62 @@
         <h3>添加新规则</h3>
         <span class="form-hint">配置一条新的 DNS 解析规则</span>
       </div>
+      <!-- Rule definition help -->
+      <details class="help-details">
+        <summary class="help-summary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>规则说明《domain patterns, IP addressing, and priority explained》</span>
+          <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="help-body">
+          <div class="help-grid">
+            <!-- Pattern format -->
+            <div class="help-card">
+              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg> 域名模式</h4>
+              <p>支持两种模式，均不区分大小写。</p>
+              <div class="help-item">
+                <code class="help-tag">固定</code>
+                <p>精确匹配域名，直接返回指定 IP。<br>示例：<code>b.pj.cn</code> → <code>192.168.0.11</code></p>
+              </div>
+              <div class="help-item">
+                <code class="help-tag">通配符</code>
+                <p>格式为 <code>*.{后缀}</code>，自动匹配该后缀的所有子域名。<br>示例：<code>*.84.pj.cn</code> 匹配 <code>a.84.pj.cn</code>、<code>b.84.pj.cn</code> 等</p>
+              </div>
+            </div>
+            <!-- Auto IP addressing -->
+            <div class="help-card">
+              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 自动 IP 生成</h4>
+              <p>通配符模式从<strong>子域名的最后一段</strong>提取数字，拼接 <code class="help-code">IpBase</code> 生成 IP。</p>
+              <div class="help-examples">
+                <p><code>a.84.pj.cn</code><br>选 <code>84</code> → <code>192.168.0.84</code></p>
+                <p><code>a.3.pj.cn</code><br>选 <code>3</code> → <code>192.168.0.3</code></p>
+              </div>
+              <p class="help-note">仅最后一串数字被解析为 IP 尾段；非数字段（如"a"）无法生成有效 IP，需确保子域名末段为数字。</p>
+            </div>
+            <!-- Priority -->
+            <div class="help-card">
+              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> 优先级</h4>
+              <p>数字越大越先匹配；<strong>优先级相同时，更具体的规则优先</strong>。</p>
+              <div class="help-examples">
+                <p><code>60</code> → <code>固定: b.pj.cn</code>（总是先匹配）</p>
+                <p><code>50</code> → <code>通配符: *.84.pj.cn</code>（高优先级通配）</p>
+                <p><code>10</code> → <code>通配符: *.pj.cn</code>（低优先级通配，不点亮 a.84.pj.cn）</p>
+              </div>
+              <p class="help-note">避免通用规则与具体规则同名放在同优先级，防止冲突。</p>
+            </div>
+            <!-- Rule type & disabled -->
+            <div class="help-card">
+              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> 记录类型与状态</h4>
+              <p class="help-examples">
+                <span>A</span><span>IPv4 正向查询</span>
+                <span>AAAA</span><span>IPv6 正向查询</span>
+                <span>MX</span><span>邮件交换</span>
+              </p>
+              <p>禁用规则不被匹配，建议修改前先禁用旧规则，确认后再删除。</p>
+            </div>
+          </div>
+        </div>
+      </details>
       <form @submit.prevent="addRule" class="rule-form">
         <div class="form-row">
           <div class="form-group">
@@ -471,6 +527,160 @@ export default defineComponent({
   font-size: 0.78rem;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+/* ── Rule Definition Help Panel ── */
+.help-details {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(94, 171, 240, 0.03);
+  animation: fadeInUp 0.5s ease 0.15s both;
+}
+
+.help-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  user-select: none;
+  -webkit-user-select: none;
+  list-style: none;
+  transition: background 0.2s;
+  border: none;
+  width: 100%;
+  background: transparent;
+  text-align: left;
+}
+
+.help-summary::-webkit-details-marker { display: none; }
+.help-summary::marker { display: none; content: ''; }
+
+.help-summary:hover {
+  background: rgba(94, 171, 240, 0.06);
+}
+
+.help-chevron {
+  margin-left: auto;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.help-details[open] .help-chevron {
+  transform: rotate(180deg);
+}
+
+.help-body {
+  padding: 0 16px 16px;
+  animation: fadeIn 0.2s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.help-card {
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.help-card h4 {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.help-card p {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.help-card p + p {
+  margin-top: 8px;
+}
+
+.help-item {
+  margin-top: 10px;
+}
+
+.help-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(94, 171, 240, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(94, 171, 240, 0.2);
+}
+
+code.help-code,
+.help-card code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  border: 1px solid rgba(0, 209, 193, 0.1);
+  white-space: nowrap;
+}
+
+.help-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.help-examples p,
+.help-examples span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.help-examples code {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 0 4px;
+}
+
+.help-examples span {
+  font-weight: 500;
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+.help-note {
+  margin-top: 8px !important;
+  font-size: 0.74rem !important;
+  color: var(--warning) !important;
+  opacity: 0.9;
 }
 
 .rule-form {
