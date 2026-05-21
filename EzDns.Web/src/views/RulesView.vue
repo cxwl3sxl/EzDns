@@ -366,8 +366,9 @@ export default defineComponent({
 
     const filteredRules = computed(() => {
       const q = searchQuery.value.trim().toLowerCase()
-      if (!q) return rules.value
-      return rules.value.filter(r => r.pattern.toLowerCase().includes(q))
+      const sorted = [...rules.value].sort((a, b) => b.priority - a.priority)
+      if (!q) return sorted
+      return sorted.filter(r => r.pattern.toLowerCase().includes(q))
     })
 
     const totalPages = computed(() =>
