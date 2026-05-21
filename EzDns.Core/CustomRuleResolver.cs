@@ -25,7 +25,7 @@ public class CustomRuleResolver : IRequestResolver
     public async Task<IResponse> Resolve(IRequest request, CancellationToken cancellationToken = default)
     {
         var allRules = await _repository.GetAllRules();
-        var sortedRules = RuleSort.BuildEvaluationOrder(allRules);
+        var (sortedRules, entries) = RuleSort.BuildEvaluationOrder(allRules);
 
         var response = Response.FromRequest(request);
 
@@ -34,10 +34,10 @@ public class CustomRuleResolver : IRequestResolver
             var domainName = question.Name.ToString();
             var lowerDomain = domainName.ToLowerInvariant();
 
-            var match = MatchRule(sortedRules, lowerDomain, question.Type);
+            var match = MatchRule(entries, lowerDomain, question.Type);
             if (match.MatchedRule is not null)
             {
-                var record = CreateRecord(question, match.MatchedRule, match.MatchedSubDomain!, lowerDomain);
+                var record = CreateRecord(question, match.MatchedRule, match.MatchedSubDomain, lowerDomain);
                 if (record is not null)
                 {
                     response.AnswerRecords.Add(record);
@@ -50,46 +50,51 @@ public class CustomRuleResolver : IRequestResolver
         return await _forwardResolver.Resolve(request, cancellationToken);
     }
 
-    /// <summary>Result of a rule match used by both the resolver and CreateRecord.</summary>
-    /// <param name="MatchedRule">The DNS rule that matched the query (null if none matched).</param>
-    /// <param name="MatchedSubDomain">
-    ///   The leading (leftmost) subdomain fragments that triggered the match,
-    ///   e.g. "a.84" for rule *.84.pj.cn matching a.84.pj.cn.
-    ///   Null for fixed rules or when no match occurred.
-    /// </param>
-    private sealed record RuleMatch(DnsRule MatchedRule, string? MatchedSubDomain);
-
-    private RuleMatch MatchRule(List<DnsRule> sortedRules, string lowerDomain, RecordType type)
+    /// <summary>
+    /// Result of a rule match consumed by both the resolver and CreateRecord.
+    /// </summary>
+    private readonly struct MatchInfo(DnsRule MatchedRule, string MatchedSubDomain)
     {
-        foreach (var rule in sortedRules.Where(r => r.IsEnabled))
+        public readonly DnsRule  MatchedRule     = MatchedRule;
+        public readonly string MatchedSubDomain = MatchedSubDomain;
+        public static readonly MatchInfo None = default;
+    }
+
+    private MatchInfo MatchRule(IReadOnlyList<RuleSort.Entry> entries, string lowerDomain, RecordType type)
+    {
+        foreach (var entry in entries)
         {
-            if (rule.Type != type && rule.Type != RecordType.ANY)
-                continue;
+            var rule = entry.Rule;
+            if (!rule.IsEnabled) continue;
+            if (rule.Type != type && rule.Type != RecordType.ANY) continue;
 
             switch (rule.Mode)
             {
                 case "fixed":
-                    if (lowerDomain.Equals(rule.Pattern.ToLowerInvariant()) ||
-                        lowerDomain.EndsWith("." + rule.Pattern.ToLowerInvariant()))
-                        return new RuleMatch(rule, null);
+                    string? fixedPattern = entry.LowerPattern;
+                    if (fixedPattern is null) continue;
+                    if (lowerDomain.Equals(fixedPattern, StringComparison.Ordinal) ||
+                        lowerDomain.EndsWith("." + fixedPattern, StringComparison.Ordinal))
+                        return new MatchInfo(rule, string.Empty);
                     break;
 
                 case "auto":
-                    if (rule.Pattern.StartsWith("*"))
+                    ReadOnlySpan<char> pat = rule.Pattern.AsSpan();
+                    if (pat.Length > 1 && pat[0] == '*')
                     {
-                        string suffix = rule.Pattern[1..];
-                        if (lowerDomain.EndsWith(suffix) || lowerDomain.Equals(suffix[1..]))
+                        ReadOnlySpan<char> suffix = pat[1..];
+                        if (lowerDomain.AsSpan().EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
                         {
                             // matchedSubDomain = leading segments before the suffix (e.g. "a.84")
                             string stripped = lowerDomain.Substring(0, lowerDomain.Length - suffix.Length);
-                            return new RuleMatch(rule, stripped);
+                            return new MatchInfo(rule, stripped);
                         }
                     }
                     break;
             }
         }
 
-        return new RuleMatch(null, null);
+        return MatchInfo.None;
     }
 
     private IResourceRecord? CreateRecord(Question question, DnsRule rule, string matchedSubDomain, string lowerDomain)
@@ -106,15 +111,20 @@ public class CustomRuleResolver : IRequestResolver
             case "auto":
                 if (rule.Pattern.StartsWith("*"))
                 {
-                    // Extract the last dot-separated segment from matchedSubDomain
-                    // e.g. "a.84" → last segment = "84"
-                    // e.g. "a"    → last segment = "a"
-                    string cleanSub = matchedSubDomain;
-                    if (cleanSub.EndsWith("."))
-                        cleanSub = cleanSub[..^1];
+                    // matchedSubDomain is guaranteed to be non-null here (MatchRule only reaches this
+                    // branch for auto-mode rules and always returns a populated MatchedSubDomain).
 
-                    var parts = cleanSub.Split('.');
-                    if (parts.Length >= 1 && int.TryParse(parts[^1], out int lastOctet))
+                    // Clean trailing dot first: "a.84." → "a.84"
+                    int td = matchedSubDomain.Length - 1;
+                    string sub = matchedSubDomain[td] == '.' ? matchedSubDomain[..td] : matchedSubDomain;
+
+                    // Extract the LAST dot-separated segment using LastIndexOf — avoids allocating string[].
+                    // "a.84"   → lastIdx=1  → segment="84"
+                    // "84"     → lastIdx=-1 → segment="84"
+                    int lastIdx = sub.LastIndexOf('.');
+                    string lastSegment = lastIdx >= 0 ? sub.Substring(lastIdx + 1) : sub;
+
+                    if (int.TryParse(lastSegment, out int lastOctet))
                     {
                         string ipBase = string.IsNullOrEmpty(rule.IpBase) ? "192.168.0." : rule.IpBase;
                         var generatedIp = IPAddress.Parse($"{ipBase}{lastOctet}");
