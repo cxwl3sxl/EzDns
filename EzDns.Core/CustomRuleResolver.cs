@@ -13,22 +13,25 @@ namespace EzDns.Core;
 
 public class CustomRuleResolver : IRequestResolver
 {
-    private readonly List<DnsRule> _rules;
+    private readonly IRuleRepository _repository;
     private readonly IRequestResolver _forwardResolver;
 
-    public CustomRuleResolver(List<DnsRule> rules, IRequestResolver forwardResolver)
+    public CustomRuleResolver(IRuleRepository repository, IRequestResolver forwardResolver)
     {
-        _rules = rules.OrderByDescending(r => r.Priority).ToList();
+        _repository = repository;
         _forwardResolver = forwardResolver;
     }
 
     public async Task<IResponse> Resolve(IRequest request, CancellationToken cancellationToken = default)
     {
+        var rules = await _repository.GetAllRules();
+        var sortedRules = rules.OrderByDescending(r => r.Priority).ToList();
+
         var response = Response.FromRequest(request);
 
         foreach (var question in request.Questions)
         {
-            var matchedRule = MatchRule(question.Name.ToString(), question.Type);
+            var matchedRule = MatchRule(sortedRules, question.Name.ToString(), question.Type);
             if (matchedRule != null)
             {
                 var record = CreateRecord(question, matchedRule, question.Name.ToString().ToLowerInvariant());
@@ -44,11 +47,11 @@ public class CustomRuleResolver : IRequestResolver
         return await _forwardResolver.Resolve(request, cancellationToken);
     }
 
-    private DnsRule? MatchRule(string domain, RecordType type)
+    private DnsRule? MatchRule(List<DnsRule> sortedRules, string domain, RecordType type)
     {
         string lowerDomain = domain.ToLowerInvariant();
 
-        foreach (var rule in _rules.Where(r => r.IsEnabled))
+        foreach (var rule in sortedRules.Where(r => r.IsEnabled))
         {
             if (rule.Type != type && rule.Type != RecordType.ANY)
                 continue;

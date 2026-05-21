@@ -1,3 +1,5 @@
+using System.IO;
+using EzDns.Core.Models;
 using EzDns.WebApi;
 using EzDns.WebApi.Services;
 
@@ -8,7 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<DnsOptions>(builder.Configuration.GetSection("Dns"));
-builder.Services.AddSingleton<IRuleRepository>(_ =>
+builder.Services.AddSingleton<IRuleRepository>(sp =>
     new JsonRuleRepository(Path.Combine(AppContext.BaseDirectory, "rules.json")));
 builder.Services.AddHostedService<EzDnsHostedService>();
 

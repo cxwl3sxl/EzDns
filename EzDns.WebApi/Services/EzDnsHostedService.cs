@@ -1,6 +1,7 @@
 using DNS.Client.RequestResolver;
 using DNS.Server;
 using EzDns.Core;
+using EzDns.Core.Models;
 using Microsoft.Extensions.Options;
 using System.Net;
 
@@ -17,10 +18,8 @@ public class EzDnsHostedService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var rules = await repository.GetAllRules();
-
         var forwardResolver = new UdpRequestResolver(new IPEndPoint(IPAddress.Parse(_options.ForwardDns), 53));
-        var resolver = new CustomRuleResolver(rules, forwardResolver);
+        var resolver = new CustomRuleResolver(repository, forwardResolver);
         _server = new DnsServer(resolver);
 
         try

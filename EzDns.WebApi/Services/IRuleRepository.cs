@@ -1,16 +1,11 @@
 using EzDns.Core.Models;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EzDns.WebApi.Services;
-
-public interface IRuleRepository
-{
-    Task<List<DnsRule>> GetAllRules();
-    Task SaveRules(List<DnsRule> rules);
-    Task AddRule(DnsRule rule);
-    Task UpdateRule(string pattern, DnsRule updatedRule);
-    Task DeleteRule(string pattern);
-}
 
 public class JsonRuleRepository : IRuleRepository
 {
