@@ -1,0 +1,98 @@
+name: Build & Publish
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20.x'
+  WEBAPI_PROJECT: EzDns.WebApi/EzDns.WebApi.csproj
+  WEBAPI_DIR: EzDns.WebApi
+  WEB_DIR: EzDns.Web
+
+jobs:
+  build:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Vue.js Frontend ──────────────────────────────────────────────
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build Vue frontend
+        run: |
+          cd ${{ env.WEB_DIR }}
+          npm install
+          npm run build
+
+      - name: Copy frontend to API wwwroot
+        run: |
+          mkdir -p ${{ env.WEBAPI_DIR }}/wwwroot
+          cp -r ${{ env.WEB_DIR }}/dist/* ${{ env.WEBAPI_DIR }}/wwwroot/
+
+      # ── .NET Backend ─────────────────────────────────────────────────
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.WEBAPI_PROJECT }}
+
+      # ── Publish for Windows (self-contained) ─────────────────────────
+      - name: Publish for Windows (win-x64)
+        run: |
+          dotnet publish ${{ env.WEBAPI_PROJECT }} \
+            --configuration Release \
+            --runtime win-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:DebugType=embedded \
+            --output ./publish/win-x64
+
+      # ── Publish for Linux (self-contained) ───────────────────────────
+      - name: Publish for Linux (linux-x64)
+        run: |
+          dotnet publish ${{ env.WEBAPI_PROJECT }} \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:DebugType=embedded \
+            --output ./publish/linux-x64
+
+      - name: Copy configuration files
+        run: |
+          cp ${{ env.WEBAPI_DIR }}/appsettings.json publish/win-x64/
+          cp ${{ env.WEBAPI_DIR }}/appsettings.json publish/linux-x64/
+          cp ${{ env.WEBAPI_DIR }}/appsettings.Development.json publish/win-x64/ 2>/dev/null || true
+          cp ${{ env.WEBAPI_DIR }}/appsettings.Development.json publish/linux-x64/ 2>/dev/null || true
+          cp ${{ env.WEBAPI_DIR }}/rules.json publish/win-x64/ 2>/dev/null || true
+          cp ${{ env.WEBAPI_DIR }}/rules.json publish/linux-x64/ 2>/dev/null || true
+          cp ${{ env.WEBAPI_DIR }}/EzDnsWebApi.service publish/linux-x64/ 2>/dev/null || true
+
+      # ── Upload Artifacts ─────────────────────────────────────────────
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EzDns-Windows-x64
+          path: publish/win-x64/
+          if-no-files-found: error
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EzDns-Linux-x64
+          path: publish/linux-x64/
+          if-no-files-found: error
