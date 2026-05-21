@@ -65,8 +65,8 @@ public class CustomRuleResolver : IRequestResolver
                 case "auto":
                     if (rule.Pattern.StartsWith("*"))
                     {
-                        string suffix = rule.Pattern.TrimStart('*').TrimStart('.');
-                        if (lowerDomain.EndsWith("." + suffix) || lowerDomain.Equals(suffix))
+                        string suffix = rule.Pattern[1..];
+                        if (lowerDomain.EndsWith(suffix) || lowerDomain.Equals(suffix[1..]))
                             return rule;
                     }
                     break;
@@ -90,11 +90,14 @@ public class CustomRuleResolver : IRequestResolver
             case "auto":
                 if (rule.Pattern.StartsWith("*"))
                 {
-                    string suffix = rule.Pattern.TrimStart('*').TrimStart('.');
-                    if (domain.EndsWith("." + suffix) || domain.Equals(suffix))
+                    string suffix = rule.Pattern[1..];
+                    if (domain.EndsWith(suffix) || domain.Equals(suffix[1..]))
                     {
-                        string subDomain = domain.Replace("." + suffix, "");
-                        var parts = subDomain.Split('.');
+                        int idx = domain.LastIndexOf(suffix);
+                        if (idx < 0)
+                            return null;
+                        string subPrefix = domain.Substring(0, idx);
+                        var parts = subPrefix.Split('.');
                         if (parts.Length >= 1 && int.TryParse(parts[0], out int lastOctet))
                         {
                             string ipBase = string.IsNullOrEmpty(rule.IpBase) ? "192.168.0." : rule.IpBase;

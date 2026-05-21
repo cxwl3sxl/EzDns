@@ -66,7 +66,7 @@ public class RulesController : ControllerBase
 
         if (trimmed.StartsWith("*"))
         {
-            var suffix = trimmed.TrimStart('*').TrimStart('.');
+            var suffix = trimmed.StartsWith("*.") ? trimmed[2..] : trimmed[1..];
             return !string.IsNullOrWhiteSpace(suffix) && suffix.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-');
         }
 

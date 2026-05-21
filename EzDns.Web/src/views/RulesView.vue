@@ -62,7 +62,7 @@
             <input
               v-model="newRule.pattern"
               class="form-input"
-              placeholder="例如 *.example.cn"
+               placeholder="例如 *.2.example.cn"
               required
             />
           </div>

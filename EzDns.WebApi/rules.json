@@ -24,5 +24,14 @@
     "isEnabled": true,
     "priority": 80,
     "ipBase": "172.16.0."
+  },
+  {
+    "pattern": "*.2.a-domain.cn",
+    "type": 1,
+    "mode": "auto",
+    "value": "",
+    "isEnabled": true,
+    "priority": 70,
+    "ipBase": "192.168.0."
   }
 ]
