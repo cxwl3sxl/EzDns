@@ -109,7 +109,14 @@ async function onLogin()
   background:
     radial-gradient(ellipse at 15% 50%, rgba(0, 209, 193, 0.10) 0%, transparent 55%),
     radial-gradient(ellipse at 85% 20%, rgba(94, 171, 240, 0.08) 0%, transparent 50%),
-    var(--bg-base);
+    var(--bg-base, var(--bg-root));
+}
+
+[data-theme="light"] .login-page {
+  background:
+    radial-gradient(ellipse at 15% 50%, rgba(0, 168, 153, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(36, 113, 163, 0.05) 0%, transparent 50%),
+    var(--bg-base, var(--bg-root));
 }
 
 .login-accent {
@@ -139,6 +146,43 @@ async function onLogin()
   animation: cardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ── Bright / Light mode ──────────────────────────────── */
+[data-theme="light"] .login-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 48px 40px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 20px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-theme="light"] .login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 40px;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(0, 168, 153, 0.4), rgba(0, 168, 153, 0.8), rgba(0, 168, 153, 0.4));
+  border-radius: 0 0 3px 3px;
+  pointer-events: none;
+}
+
+[data-theme="light"] .login-accent {
+  opacity: 0.5;
+}
+
+[data-theme="light"] .field-label {
+  color: #4a5060;
+}
+
+[data-theme="light"] .login-hint {
+  color: #aab0bc;
+}
+
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -163,6 +207,12 @@ async function onLogin()
   color: var(--accent);
   flex-shrink: 0;
   box-shadow: 0 0 20px rgba(0, 209, 193, 0.12);
+}
+
+[data-theme="light"] .brand-mark {
+  background: rgba(0, 168, 153, 0.08);
+  border: 1px solid rgba(0, 168, 153, 0.18);
+  box-shadow: 0 0 16px rgba(0, 168, 153, 0.08);
 }
 
 .brand-text h1 {
@@ -194,6 +244,11 @@ async function onLogin()
   font-size: 0.83rem;
   padding: 10px 14px;
   animation: shake 0.4s ease both;
+}
+
+[data-theme="light"] .login-error {
+  background: rgba(208, 57, 57, 0.06);
+  border: 1px solid rgba(208, 57, 57, 0.20);
 }
 
 @keyframes shake {
@@ -240,6 +295,22 @@ async function onLogin()
   box-shadow: 0 0 0 3px rgba(0, 209, 193, 0.10);
 }
 
+[data-theme="light"] .field-input {
+  background: #f0f2f5;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  color: #1a1d23;
+}
+
+[data-theme="light"] .field-input::placeholder {
+  color: #aab0bc;
+}
+
+[data-theme="light"] .field-input:focus {
+  background: #ffffff;
+  border-color: rgba(0, 168, 153, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 168, 153, 0.12);
+}
+
 .login-btn {
   display: flex;
   align-items: center;
@@ -275,6 +346,28 @@ async function onLogin()
   transform: none;
 }
 
+[data-theme="light"] .login-btn {
+  background: #00a899;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 168, 153, 0.30);
+}
+
+[data-theme="light"] .login-btn:hover:not(:disabled) {
+  background: #009688;
+  box-shadow: 0 8px 24px rgba(0, 168, 153, 0.40);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .login-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+[data-theme="light"] .login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .spinner-mini {
   width: 16px;
   height: 16px;
@@ -282,6 +375,10 @@ async function onLogin()
   border-top-color: #0b0e14;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
+}
+
+[data-theme="light"] .spinner-mini {
+  border-top-color: #ffffff;
 }
 
 @keyframes spin {
