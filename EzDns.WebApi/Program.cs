@@ -5,6 +5,11 @@ using EzDns.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
+// ── Service control commands (install/uninstall/status/start/stop) ────────
+if (ServiceCommands.HandleCommand(args))
+    return;
+// ─────────────────────────────────────────────────────────────────────────
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -45,6 +50,14 @@ builder.Services.AddAuthorization();
 // ─────────────────────────────────────────────────────────────────────────
 
 builder.Services.AddHostedService<EzDnsHostedService>();
+
+// Enable running as Windows Service or Linux systemd service
+builder.Host.UseWindowsService(options =>
+{
+    options.ServiceName = "EzDns";
+});
+
+builder.Host.UseSystemd();
 
 var app = builder.Build();
 
