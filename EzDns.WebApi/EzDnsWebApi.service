@@ -1,0 +1,36 @@
+# EzDns Web API - systemd service unit
+#
+# Install:
+#   sudo cp EzDnsWebApi.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable EzDnsWebApi.service
+#   sudo systemctl start EzDnsWebApi.service
+#
+# Or use the built-in 'install' command which auto-configures this:
+#   EzDns.WebApi install
+#
+# Uninstall:
+#   sudo systemctl stop EzDnsWebApi.service
+#   sudo systemctl disable EzDnsWebApi.service
+#   sudo rm /etc/systemd/system/EzDnsWebApi.service
+#   sudo systemctl daemon-reload
+#
+# Or use the built-in 'uninstall' command:
+#   EzDns.WebApi uninstall
+
+[Unit]
+Description=EzDns DNS Management API Server
+After=network.target
+
+[Service]
+Type=notify
+# Adjust ExecStart to match your deployment path, or use the built-in 'install' command
+# which auto-configures this based on the current executable location.
+ExecStart=/usr/share/ezdns/EzDns.WebApi
+Restart=on-failure
+RestartSec=5
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_ENVIRONMENT=Production
+
+[Install]
+WantedBy=multi-user.target
