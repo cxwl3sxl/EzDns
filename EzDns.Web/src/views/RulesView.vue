@@ -199,18 +199,32 @@
     <div class="table-section">
       <div class="table-header">
         <h3>规则列表</h3>
-        <span class="table-count">{{ rules.length }} 条规则</span>
+        <div class="table-header-right">
+          <div class="search-box">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              class="search-input"
+              type="text"
+              placeholder="搜索域名..."
+              :value="searchQuery"
+              @input="onSearchInput"
+            />
+          </div>
+          <span class="table-count">{{ filteredRules.length }} 条规则</span>
+        </div>
       </div>
 
       <!-- Empty state -->
-      <div v-if="!loading && rules.length === 0" class="empty-state">
+      <div v-if="!loading && filteredRules.length === 0" class="empty-state">
         <div class="empty-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
-        <p class="empty-title">暂无规则</p>
-        <p class="empty-desc">添加第一条 DNS 规则开始配置</p>
+        <p class="empty-title">{{ searchQuery ? '未找到匹配的规则' : '暂无规则' }}</p>
+        <p class="empty-desc">{{ searchQuery ? '尝试修改搜索关键词' : '添加第一条 DNS 规则开始配置' }}</p>
       </div>
 
       <!-- Table -->
@@ -228,7 +242,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="rule in rules" :key="rule.pattern + rule.type" :class="{ disabled: !rule.isEnabled }">
+            <tr v-for="rule in paginatedRules" :key="rule.pattern + rule.type" :class="{ disabled: !rule.isEnabled }">
               <td class="cell-pattern">
                 <code>{{ rule.pattern }}</code>
               </td>
@@ -271,6 +285,39 @@
             </tr>
           </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+          <span class="pagination-info">显示 {{ pageStart }} – {{ pageEnd }} 条，共 {{ filteredRules.length }} 条</span>
+          <div class="pagination-controls">
+            <button
+              class="page-btn"
+              :disabled="currentPage <= 1"
+              @click="goToPage(currentPage - 1)"
+              title="上一页"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button
+              v-for="p in visiblePages"
+              :key="p"
+              class="page-num"
+              :class="{ active: p === currentPage, ellipsis: p === -1 }"
+              :disabled="p === -1"
+              @click="p !== -1 && goToPage(p)"
+            >
+              {{ p === -1 ? '…' : p }}
+            </button>
+            <button
+              class="page-btn"
+              :disabled="currentPage >= totalPages"
+              @click="goToPage(currentPage + 1)"
+              title="下一页"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Loading state -->
@@ -298,9 +345,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import type { DnsRule } from '../types'
+import { useRefreshKey } from '../composables/useRefreshKey'
 
 let toastId = 0
 
@@ -310,6 +358,54 @@ export default defineComponent({
     const loading = ref(false)
     const submitting = ref(false)
     const toasts = ref<{ id: number; type: 'success' | 'error' | 'info'; message: string; delay: number }[]>([])
+
+    // ── Search & Pagination ──────────────────────────────
+    const searchQuery = ref('')
+    const currentPage = ref(1)
+    const pageSize = ref(15)
+
+    const filteredRules = computed(() => {
+      const q = searchQuery.value.trim().toLowerCase()
+      if (!q) return rules.value
+      return rules.value.filter(r => r.pattern.toLowerCase().includes(q))
+    })
+
+    const totalPages = computed(() =>
+      Math.max(1, Math.ceil(filteredRules.value.length / pageSize.value))
+    )
+
+    const paginatedRules = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      return filteredRules.value.slice(start, start + pageSize.value)
+    })
+
+    const pageStart = computed(() =>
+      filteredRules.value.length === 0 ? 0 : (currentPage.value - 1) * pageSize.value + 1
+    )
+    const pageEnd = computed(() =>
+      Math.min(currentPage.value * pageSize.value, filteredRules.value.length)
+    )
+
+    /** Page numbers to show in paginator (max 7) */
+    const visiblePages = computed(() => {
+      const total = totalPages.value
+      const cur = currentPage.value
+      if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+      if (cur <= 4) return [1, 2, 3, 4, 5, -1, total]
+      if (cur >= total - 3) return [1, -1, total - 4, total - 3, total - 2, total - 1, total]
+      return [1, -1, cur - 1, cur, cur + 1, -1, total]
+    })
+
+    function goToPage(page: number) {
+      if (page >= 1 && page <= totalPages.value) currentPage.value = page
+    }
+
+    function onSearchInput(e: Event) {
+      const val = (e.target as HTMLInputElement).value
+      searchQuery.value = val
+      currentPage.value = 1
+    }
+    // ─────────────────────────────────────────────────────
 
     const newRule = ref({
       pattern: '',
@@ -341,6 +437,7 @@ export default defineComponent({
       try {
         const response = await axios.get<DnsRule[]>('/api/rules')
         rules.value = response.data
+        currentPage.value = 1
       }
       catch (e) {
         showToast('error', '获取规则列表失败')
@@ -398,6 +495,11 @@ export default defineComponent({
       return { 1: 'a', 2: 'ns', 15: 'mx', 28: 'aaaa', 16: 'txt' }[type] || 'default'
     }
 
+    // ── Refresh key — re-fetch when App.vue triggers ──────
+    const { refreshKey } = useRefreshKey()
+    watch(refreshKey, () => fetchRules())
+    // ──────────────────────────────────────────────────────
+
     onMounted(fetchRules)
 
     return {
@@ -411,7 +513,19 @@ export default defineComponent({
       deleteRule,
       toggleRule,
       recordTypeToString,
-      recordTypeClass
+      recordTypeClass,
+      // search & pagination
+      searchQuery,
+      currentPage,
+      pageSize,
+      totalPages,
+      paginatedRules,
+      filteredRules,
+      pageStart,
+      pageEnd,
+      visiblePages,
+      goToPage,
+      onSearchInput
     }
   }
 })
@@ -771,6 +885,7 @@ code.help-code,
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  flex: 1;
 }
 
 .toggle-btn:first-child {
@@ -1220,6 +1335,116 @@ code.help-code,
   }
 }
 
+/* ── Search ── */
+.table-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 220px;
+  padding: 8px 12px 8px 34px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-btn,
+.page-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.page-btn:hover:not(:disabled),
+.page-num:hover:not(:disabled):not(.ellipsis) {
+  background: var(--bg-hover);
+  border-color: var(--border-active);
+  color: var(--text-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.page-num.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.page-num.ellipsis {
+  border: none;
+  cursor: default;
+  color: var(--text-muted);
+  min-width: 20px;
+  padding: 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 960px) {
   .stats-grid {
@@ -1234,6 +1459,18 @@ code.help-code,
   }
   .form-row-secondary {
     flex-direction: column;
+  }
+  .table-header-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .search-input {
+    width: 100%;
+  }
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 
@@ -1268,6 +1505,16 @@ code.help-code,
     width: 100%;
     order: -1;
     color: var(--text-muted);
+  }
+  .pagination-info {
+    font-size: 0.72rem;
+    text-align: center;
+  }
+  .page-num:not(.active):not(.ellipsis) {
+    display: none;
+  }
+  .pagination-controls {
+    gap: 2px;
   }
 }
 </style>

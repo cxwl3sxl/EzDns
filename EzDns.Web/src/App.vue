@@ -38,8 +38,8 @@
           <p class="topbar-subtitle">配置和管理 DNS 解析规则</p>
         </div>
         <div class="topbar-actions">
-          <button class="btn-primary" @click="$emit('refresh')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ spinning: loading }">
+          <button class="btn-primary" @click="triggerRefresh">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"/>
               <polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -88,17 +88,16 @@
 import { computed } from 'vue'
 import { useRoute }   from 'vue-router'
 import { useAuth }    from './composables/useAuth'
+import { useRefreshKey } from './composables/useRefreshKey'
 import { theme, toggleTheme } from './composables/useTheme'
 
 const route = useRoute()
 const auth  = useAuth()
+const { triggerRefresh } = useRefreshKey()
 
 const showLayout = computed(() =>
     auth.isLoggedIn.value && route.path !== '/login'
 )
-
-defineProps<{ loading?: boolean }>()
-defineEmits<{ refresh: [] }>()
 
 function onLogout()
 {
@@ -313,14 +312,6 @@ function onLogout()
   background: rgba(0, 209, 193, 0.18);
   border-color: rgba(0, 209, 193, 0.35);
   box-shadow: var(--shadow-glow);
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .topbar-user {
