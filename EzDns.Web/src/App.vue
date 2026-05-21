@@ -46,6 +46,14 @@
             </svg>
             <span>刷新</span>
           </button>
+          <span class="topbar-user" v-if="auth.isLoggedIn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {{ auth.username }}
+          </span>
+          <button class="btn-logout" v-if="auth.isLoggedIn" @click="onLogout" title="退出登录">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>退出</span>
+          </button>
         </div>
       </header>
 
@@ -62,9 +70,18 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useAuth } from './composables/useAuth'
+
+const auth = useAuth()
 
 defineProps<{ loading?: boolean }>()
 defineEmits<{ refresh: [] }>()
+
+function onLogout()
+{
+    auth.logout()
+    window.location.href = '/login'
+}
 </script>
 
 <style scoped>
@@ -272,6 +289,38 @@ defineEmits<{ refresh: [] }>()
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.topbar-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--danger);
+  background: rgba(242, 87, 87, 0.08);
+  border: 1px solid rgba(242, 87, 87, 0.2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(242, 87, 87, 0.15);
+  border-color: rgba(242, 87, 87, 0.35);
 }
 
 .content {

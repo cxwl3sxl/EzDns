@@ -1,11 +1,13 @@
 using EzDns.Core.Models;
 using EzDns.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EzDns.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class RulesController(IRuleRepository repository) : ControllerBase
 {
     [HttpGet]
