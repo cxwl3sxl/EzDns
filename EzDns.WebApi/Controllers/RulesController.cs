@@ -6,19 +6,12 @@ namespace EzDns.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RulesController : ControllerBase
+public class RulesController(IRuleRepository repository) : ControllerBase
 {
-    private readonly IRuleRepository _repository;
-
-    public RulesController(IRuleRepository repository)
-    {
-        _repository = repository;
-    }
-
     [HttpGet]
     public async Task<ActionResult<List<DnsRule>>> GetAllRules()
     {
-        var rules = await _repository.GetAllRules();
+        var rules = await repository.GetAllRules();
         return Ok(rules);
     }
 
@@ -31,7 +24,7 @@ public class RulesController : ControllerBase
         if (!IsValidDnsPattern(rule.Pattern))
             return BadRequest("Invalid pattern format. Use format like 'example.com' or '*.example.com'");
 
-        await _repository.AddRule(rule);
+        await repository.AddRule(rule);
         return Ok();
     }
 
@@ -44,14 +37,14 @@ public class RulesController : ControllerBase
         if (!IsValidDnsPattern(pattern))
             return BadRequest("Invalid pattern format. Use format like 'example.com' or '*.example.com'");
 
-        await _repository.UpdateRule(pattern, rule);
+        await repository.UpdateRule(pattern, rule);
         return Ok();
     }
 
     [HttpDelete]
     public async Task<ActionResult> DeleteRule([FromQuery] string pattern)
     {
-        await _repository.DeleteRule(pattern);
+        await repository.DeleteRule(pattern);
         return Ok();
     }
 

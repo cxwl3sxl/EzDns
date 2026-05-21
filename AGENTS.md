@@ -25,6 +25,10 @@ cd ../EzDns.Web && npm install && npm run dev
 - Manual IP updates required if runtime IP changes
 - No automatic API restart on code change; stop/start needed
 - DNS server starts with API; ensure API is running for rule changes
+- DNS port 53 requires administrator privileges on Windows (UDP sockets < 1024 are restricted)
+  - Run `dotnet run` from an elevated terminal / Visual Studio "Run as Administrator"
+  - If DNS server fails to start, the API (port 8080) will still be reachable — check startup logs for the binding error
+  - Alternatively set `Dns.DnsPort` in `appsettings.json` to a port > 1024 for testing (clients must point to that port explicitly)
 
 ## Testing
 - Use `/api/rules` endpoint (e.g., Postman) to verify rules

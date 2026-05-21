@@ -1,4 +1,3 @@
-using DNS;
 using DNS.Protocol;
 using DNS.Protocol.ResourceRecords;
 using DNS.Client.RequestResolver;
@@ -93,12 +92,18 @@ public class CustomRuleResolver : IRequestResolver
                     string suffix = rule.Pattern[1..];
                     if (domain.EndsWith(suffix) || domain.Equals(suffix[1..]))
                     {
-                        int idx = domain.LastIndexOf(suffix);
+                        int idx = domain.LastIndexOf(suffix, StringComparison.Ordinal);
                         if (idx < 0)
                             return null;
                         string subPrefix = domain.Substring(0, idx);
+                        // Remove trailing dot if present
+                        if (subPrefix.EndsWith("."))
+                        {
+                            subPrefix = subPrefix.Substring(0, subPrefix.Length - 1);
+                        }
                         var parts = subPrefix.Split('.');
-                        if (parts.Length >= 1 && int.TryParse(parts[0], out int lastOctet))
+                        // Get the last part which should be the numeric value
+                        if (parts.Length >= 1 && int.TryParse(parts[parts.Length - 1], out int lastOctet))
                         {
                             string ipBase = string.IsNullOrEmpty(rule.IpBase) ? "192.168.0." : rule.IpBase;
                             var generatedIp = IPAddress.Parse($"{ipBase}{lastOctet}");

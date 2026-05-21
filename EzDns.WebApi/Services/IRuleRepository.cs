@@ -1,6 +1,5 @@
 using EzDns.Core.Models;
 using System.Text.Json;
-using System.Collections.Generic;
 
 namespace EzDns.WebApi.Services;
 

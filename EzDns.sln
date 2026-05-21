@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzDns.Core", "EzDns.Core\EzDns.Core.csproj", "{DA99EBE0-A24D-0E4B-6737-706AF245B2D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzDns.WebApi", "EzDns.WebApi\EzDns.WebApi.csproj", "{E6953E2C-65EB-9FCC-9FFA-7EEE2D5D34DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DA99EBE0-A24D-0E4B-6737-706AF245B2D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA99EBE0-A24D-0E4B-6737-706AF245B2D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA99EBE0-A24D-0E4B-6737-706AF245B2D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA99EBE0-A24D-0E4B-6737-706AF245B2D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6953E2C-65EB-9FCC-9FFA-7EEE2D5D34DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6953E2C-65EB-9FCC-9FFA-7EEE2D5D34DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6953E2C-65EB-9FCC-9FFA-7EEE2D5D34DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6953E2C-65EB-9FCC-9FFA-7EEE2D5D34DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D0D80F3-8214-440B-BA4E-4C69275E563C}
+	EndGlobalSection
+EndGlobal
