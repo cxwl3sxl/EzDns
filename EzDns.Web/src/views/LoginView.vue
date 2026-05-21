@@ -80,7 +80,7 @@ async function onLogin()
             '/api/auth/login',
             { username: form.value.username, password: form.value.password }
         )
-        doLogin(resp.data.token)
+        doLogin(resp.data.token, form.value.username)
         router.replace('/rules')
     }
     catch (e: unknown)

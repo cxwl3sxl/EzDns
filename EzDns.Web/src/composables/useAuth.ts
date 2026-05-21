@@ -4,7 +4,10 @@ const TOKEN_KEY = 'ezdns_token'
 const USER_KEY  = 'ezdns_user'
 
 const token    = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-const username = ref<string | null>(localStorage.getItem(USER_KEY))
+const raw = localStorage.getItem(USER_KEY)
+const username = ref<string | null>(raw === 'undefined' || raw === null ? null : raw)
+// Clean up previously stored "undefined" string
+if (raw === 'undefined') localStorage.removeItem(USER_KEY)
 
 export function useAuth()
 {
