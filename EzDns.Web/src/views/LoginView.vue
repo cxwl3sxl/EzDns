@@ -1,9 +1,10 @@
 <template>
   <div class="login-page">
+    <div class="login-accent" />
     <div class="login-card">
       <div class="login-brand">
         <div class="brand-mark">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="2" y1="12" x2="22" y2="12"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -98,60 +99,79 @@ async function onLogin()
 
 <style scoped>
 .login-page {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(0, 209, 193, 0.07) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(94, 171, 240, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 15% 50%, rgba(0, 209, 193, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(94, 171, 240, 0.08) 0%, transparent 50%),
     var(--bg-base);
-  padding: 24px;
+}
+
+.login-accent {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 75% 30%, rgba(0, 209, 193, 0.055) 0%, transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(94, 171, 240, 0.04) 0%, transparent 40%);
+  pointer-events: none;
 }
 
 .login-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 400px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 40px 36px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
-  animation: cardIn 0.5s ease both;
+  background: rgba(18, 22, 31, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 48px 40px;
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 193, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: cardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 36px;
+  gap: 16px;
+  margin-bottom: 40px;
 }
 
 .brand-mark {
-  width: 50px;
-  height: 50px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(0, 209, 193, 0.2);
-  border-radius: var(--radius-md);
+  width: 52px;
+  height: 52px;
+  background: rgba(0, 209, 193, 0.10);
+  border: 1px solid rgba(0, 209, 193, 0.22);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
   flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0, 209, 193, 0.12);
 }
 
 .brand-text h1 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   color: var(--text-primary);
-  letter-spacing: -0.025em;
-  line-height: 1;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .brand-text p {
@@ -163,31 +183,31 @@ async function onLogin()
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .login-error {
-  background: rgba(242, 87, 87, 0.08);
-  border: 1px solid rgba(242, 87, 87, 0.25);
+  background: rgba(242, 87, 87, 0.09);
+  border: 1px solid rgba(242, 87, 87, 0.28);
   border-radius: var(--radius-sm);
   color: var(--danger);
   font-size: 0.83rem;
   padding: 10px 14px;
-  animation: shake 0.35s ease both;
+  animation: shake 0.4s ease both;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  20%      { transform: translateX(-6px); }
-  40%      { transform: translateX(6px); }
-  60%      { transform: translateX(-4px); }
-  80%      { transform: translateX(4px); }
+  20%      { transform: translateX(-7px); }
+  40%      { transform: translateX(7px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
 }
 
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .field-label {
@@ -195,34 +215,37 @@ async function onLogin()
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .field-input {
   width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   box-sizing: border-box;
 }
 
+.field-input::placeholder { color: var(--text-muted); }
+
 .field-input:focus {
-  border-color: var(--border-active);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 209, 193, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 209, 193, 0.10);
 }
 
 .login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  background: linear-gradient(135deg, var(--accent), #00b5a4);
+  padding: 13px;
+  background: var(--accent);
   color: #0b0e14;
   border: none;
   border-radius: var(--radius-sm);
@@ -231,14 +254,15 @@ async function onLogin()
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 14px rgba(0, 209, 193, 0.25);
+  box-shadow: 0 2px 18px rgba(0, 209, 193, 0.28);
   letter-spacing: 0.04em;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .login-btn:hover:not(:disabled) {
+  background: #00d6be;
+  box-shadow: 0 6px 28px rgba(0, 209, 193, 0.40);
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(0, 209, 193, 0.38);
 }
 
 .login-btn:active:not(:disabled) {
@@ -246,8 +270,8 @@ async function onLogin()
 }
 
 .login-btn:disabled {
-  opacity: 0.65;
-  cursor: default;
+  opacity: 0.6;
+  cursor: not-allowed;
   transform: none;
 }
 
@@ -265,9 +289,9 @@ async function onLogin()
 }
 
 .login-hint {
-  margin-top: 22px;
+  margin-top: 26px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--text-muted);
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <aside class="sidebar">
+    <aside class="sidebar" v-if="showLayout">
       <div class="sidebar-brand">
         <div class="brand-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -32,7 +32,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar">
+      <header class="topbar" v-if="showLayout">
         <div class="topbar-title">
           <h1>DNS 规则管理</h1>
           <p class="topbar-subtitle">配置和管理 DNS 解析规则</p>
@@ -70,9 +70,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute }   from 'vue-router'
 import { useAuth } from './composables/useAuth'
 
-const auth = useAuth()
+const route  = useRoute()
+const auth   = useAuth()
+
+const showLayout = computed(() =>
+    auth.isLoggedIn.value && route.path !== '/login'
+)
 
 defineProps<{ loading?: boolean }>()
 defineEmits<{ refresh: [] }>()
