@@ -85,9 +85,15 @@ async function onLogin()
     }
     catch (e: unknown)
     {
-        const msg = axios.isAxiosError(e) && e.response?.data
-            ? String(e.response.data)
-            : '登录失败，请检查网络'
+        let msg = '登录失败，请检查网络'
+        if (axios.isAxiosError(e) && e.response?.data) {
+            const data = e.response.data
+            if (typeof data === 'string') {
+                msg = data
+            } else if (data && typeof data === 'object' && 'message' in data) {
+                msg = String(data.message)
+            }
+        }
         error.value = msg
     }
     finally
